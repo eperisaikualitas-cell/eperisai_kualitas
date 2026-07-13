@@ -46,7 +46,7 @@
         @keyframes fadeEffect { from {opacity: 0;} to {opacity: 1;} }
         
         .table-responsive { width: 100%; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
-        table { width: 100%; min-width: 800px; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: rgba(255,255,255,0.7); }
+        table { width: 100%; min-width: 900px; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: rgba(255,255,255,0.7); }
         th { background: rgba(26, 115, 232, 0.9); color: white; padding: 12px; position: sticky; top: 0; z-index: 10; }
         td { padding: 10px; border: 1px solid rgba(0,0,0,0.1); vertical-align: top; }
         tr:nth-child(even) { background: rgba(255, 255, 255, 0.5); }
@@ -54,7 +54,6 @@
         
         .sticky-footer { position: sticky; bottom: 0; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 15px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; z-index: 100; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; border-radius: 0 0 12px 12px;}
         
-        /* TOMBOL CETAK & HITUNG (SUDAH DIPERBAIKI) */
         .btn-hitung { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; flex: 1; min-width: 200px; max-width: 300px; text-decoration:none; display:flex; justify-content:center; align-items:center; }
         .btn-excel { background: #107c10; } .btn-word { background: #0056b3; }
         .btn-hitung:hover { transform: translateY(-2px); opacity: 0.9; }
@@ -117,6 +116,17 @@
                         <option value="NON_TPI">NON TPI</option>
                     </select>
                 </div>
+                <!-- BAGIAN BARU: DROPDOWN TIM PENILAI -->
+                <div class="form-group">
+                    <label>Penandatangan BA (Cetak Word):</label>
+                    <select name="penandatangan_id">
+                        <option value="">-- Cetak Default --</option>
+                        @php $tim_penilai = \App\Models\TimPenilai::all(); @endphp
+                        @foreach($tim_penilai as $tim)
+                            <option value="{{ $tim->id }}">{{ $tim->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             <div class="tab">
@@ -134,8 +144,9 @@
                                     <th width="5%">No</th>
                                     <th>Butir Pemeriksaan {{ $kategori }}</th>
                                     <th width="12%">Ya/Tidak</th>
-                                    <th width="12%">Nilai</th>
-                                    <th width="25%">Komentar</th>
+                                    <th width="12%">Nilai Kepatuhan</th>
+                                    <th width="22%">Temuan Ketidaksesuaian</th>
+                                    <th width="22%">Catatan</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -154,10 +165,11 @@
                                     </td>
                                     <td>
                                         <select name="val_{{ $kategori }}[]">
-                                            <option value="5">A (5)</option><option value="4">B (4)</option><option value="3">C (3)</option><option value="2">D (2)</option><option value="1">E (1)</option>
+                                            <option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option><option value="0">0</option>
                                         </select>
                                     </td>
-                                    <td><input type="text" name="cm_{{ $kategori }}[]" placeholder="Tambahkan Komentar..."></td>
+                                    <td><input type="text" name="tm_{{ $kategori }}[]" placeholder="Temuan..."></td>
+                                    <td><input type="text" name="ct_{{ $kategori }}[]" placeholder="Catatan..."></td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -186,7 +198,11 @@
 
             <div style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
                 <a href="{{ route('perisai.riwayat.excel', $hasil['id']) }}" class="btn-hitung btn-excel">📥 CETAK EXCEL</a>
-                <a href="{{ route('perisai.riwayat.word', $hasil['id']) }}" class="btn-hitung btn-word">📄 CETAK WORD</a>
+                <!-- BAGIAN BARU: MENGIRIM ID PEGAWAI DARI FORM KE CETAK WORD -->
+                <form action="{{ route('perisai.riwayat.word', $hasil['id']) }}" method="GET" style="display:inline;">
+                    <input type="hidden" name="penandatangan_id" id="hidden_penandatangan_id">
+                    <button type="submit" class="btn-hitung btn-word" onclick="document.getElementById('hidden_penandatangan_id').value = document.querySelector('select[name=penandatangan_id]').value;">📄 CETAK WORD</button>
+                </form>
             </div>
         </div>
     @endif

@@ -14,7 +14,6 @@ class PerisaiController extends Controller
 {
     use ExportPerisaiTrait;
 
-    // 1. HALAMAN UTAMA (FORM)
     public function index()
     {
         $soal = SoalPerisai::all()->groupBy('kategori');
@@ -22,7 +21,6 @@ class PerisaiController extends Controller
         return view('perisai.index', compact('soal', 'hasil'));
     }
 
-    // 2. PROSES HITUNG / SIMPAN
     public function store(Request $request)
     {
         $request->validate([
@@ -42,7 +40,7 @@ class PerisaiController extends Controller
         try {
             $total_nilai_diperoleh = 0;
             $total_nilai_maksimal = 0;
-            $max_raw_value = 5;
+            $max_raw_value = 5; // Nilai maksimum per butir sekarang 5
             $results_per_cat = [];
 
             foreach ($kategori_valid as $kat) {
@@ -94,7 +92,8 @@ class PerisaiController extends Controller
                             'soal_id' => $soal_id,
                             'jawaban_yt' => $request->input("yt_{$kat}")[$index] ?? 'Ya',
                             'skor' => $request->input("val_{$kat}")[$index] ?? 5,
-                            'komentar' => $request->input("cm_{$kat}")[$index] ?? null,
+                            'temuan_ketidaksesuaian' => $request->input("tm_{$kat}")[$index] ?? null,
+                            'catatan' => $request->input("ct_{$kat}")[$index] ?? null,
                         ]);
                     }
                 }
@@ -119,14 +118,12 @@ class PerisaiController extends Controller
         }
     }
 
-    // 5. HALAMAN RIWAYAT
     public function riwayat()
     {
         $riwayat = RiwayatPenilaian::orderBy('created_at', 'desc')->get();
         return view('perisai.riwayat', compact('riwayat'));
     }
 
-    // 6. HALAMAN KELOLA KUESIONER
     public function kuesioner()
     {
         $soal = SoalPerisai::orderBy('kategori')->get();
@@ -146,7 +143,6 @@ class PerisaiController extends Controller
         return back()->with('success', 'Soal berhasil dihapus!');
     }
 
-    // 9. HALAMAN KELOLA TIM PENILAI
     public function tim()
     {
         $tim = TimPenilai::all();
@@ -173,16 +169,11 @@ class PerisaiController extends Controller
         return back()->with('success', 'Data Pegawai berhasil diperbarui!');
     }
 
-    // FUNGSI HAPUS RIWAYAT
     public function destroyRiwayat($id)
     {
         try {
-            // Hapus detail penilaiannya dulu biar tidak jadi data yatim (orphan) di database
             DetailPenilaian::where('riwayat_id', $id)->delete();
-            
-            // Baru hapus riwayat utamanya
             RiwayatPenilaian::findOrFail($id)->delete();
-
             return redirect()->back()->with('success', 'Riwayat audit berhasil dihapus permanen!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menghapus: ' . $e->getMessage());

@@ -47,10 +47,11 @@ trait ExportPerisaiTrait
             $sheet->setCellValue('A5', 'NO');
             $sheet->setCellValue('B5', 'BUTIR PEMERIKSAAN');
             $sheet->setCellValue('C5', 'YA / TIDAK');
-            $sheet->setCellValue('D5', 'SKOR (100)');
-            $sheet->setCellValue('E5', 'KOMENTAR');
+            $sheet->setCellValue('D5', 'NILAI KEPATUHAN');
+            $sheet->setCellValue('E5', 'TEMUAN KETIDAKSESUAIAN');
+            $sheet->setCellValue('F5', 'CATATAN');
 
-            $sheet->getStyle('A5:E5')->applyFromArray([
+            $sheet->getStyle('A5:F5')->applyFromArray([
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1A73E8']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
@@ -60,7 +61,8 @@ trait ExportPerisaiTrait
             $teks_soal = $request->input("teks_{$kat}") ?? [];
             $yt_values = $request->input("yt_{$kat}") ?? [];
             $val_values = $request->input("val_{$kat}") ?? [];
-            $cm_values = $request->input("cm_{$kat}") ?? [];
+            $tm_values = $request->input("tm_{$kat}") ?? [];
+            $ct_values = $request->input("ct_{$kat}") ?? [];
 
             $kategori_aktual = 0;
             $kategori_maksimal = count($teks_soal) * 5;
@@ -68,17 +70,22 @@ trait ExportPerisaiTrait
             foreach ($teks_soal as $index => $teks) {
                 $raw_val = $val_values[$index] ?? 0;
                 $kategori_aktual += $raw_val;
-                $converted_val = ($raw_val / 5) * 100;
                 
                 $sheet->setCellValue('A' . $row, $index + 1);
                 $sheet->setCellValue('B' . $row, $teks);
                 $sheet->setCellValue('C' . $row, $yt_values[$index] ?? '-');
-                $sheet->setCellValue('D' . $row, $converted_val);
-                $sheet->setCellValue('E' . $row, $cm_values[$index] ?? '');
+                $sheet->setCellValue('D' . $row, $raw_val);
+                $sheet->setCellValue('E' . $row, $tm_values[$index] ?? '');
+                $sheet->setCellValue('F' . $row, $ct_values[$index] ?? '');
+                
+                $sheet->getStyle('C'.$row.':D'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $row++;
             }
-            $sheet->getColumnDimension('B')->setWidth(60);
-            $sheet->getColumnDimension('E')->setWidth(35);
+            $sheet->getColumnDimension('B')->setWidth(50);
+            $sheet->getColumnDimension('C')->setWidth(15);
+            $sheet->getColumnDimension('D')->setWidth(20);
+            $sheet->getColumnDimension('E')->setWidth(30);
+            $sheet->getColumnDimension('F')->setWidth(30);
             $sheetIndex++;
 
             $skor_kategori = ($kategori_maksimal > 0) ? ($kategori_aktual / $kategori_maksimal) * 100 : 0;
@@ -127,7 +134,6 @@ trait ExportPerisaiTrait
 
         $total_akhir = ($total_maksimal > 0) ? ($total_diperoleh / $total_maksimal) * 100 : 0;
         
-        // EVALUASI WARNA BOX PREDIKAT (5 KATEGORI)
         if ($total_akhir >= 88.00) {
             $predikat = "Kualitas Tertinggi";
             $pred_bg = '66FF66'; $pred_color = '000000';
@@ -168,7 +174,6 @@ trait ExportPerisaiTrait
         $row += 3;
         $sheet->setCellValue('A' . $row, 'Keterangan :');
         
-        // RESTRUKTURISASI STRUKTUR KOLOM TABEL LEGENDA
         $row++;
         $sheet->setCellValue('A' . $row, 'Interval Nilai');
         $sheet->setCellValue('B' . $row, 'Kategori');
@@ -177,14 +182,13 @@ trait ExportPerisaiTrait
         
         $sheet->getStyle('A' . $row . ':D' . $row)->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1A73E8']], // Warna Biru Header
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1A73E8']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]
             ]
         ]);
 
-        // DATA TABEL LEGENDA 5 BARIS SESUAI FOTO FORM
         $zonaData = [
             ['88.00 - 100', 'A', 'Hijau', 'Kualitas Tertinggi', '66FF66', '000000'],
             ['78.00 - 87.99', 'B', 'Hijau', 'Kualitas Tinggi', '32CD32', '000000'],
@@ -298,41 +302,24 @@ trait ExportPerisaiTrait
         $section->addTextBreak(2);
 
         $tglFormat = $now->format('d ') . $bulanText . $now->format(' Y');
-        $section->addText('Wonosobo, ' . $tglFormat, [], ['alignment' => 'right']);
-        $section->addText('Tim Penjaminan Kualitas', ['bold' => true], ['alignment' => 'left']);
         
-        $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 50];
-        $phpWord->addTableStyle('TimTable', $tableStyle);
-        $table = $section->addTable('TimTable');
-        
-        $table->addRow();
-        $table->addCell(500)->addText('No.', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2800)->addText('Nama', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2300)->addText('NIP', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2800)->addText('Jabatan', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2100)->addText('Tandatangan', ['bold' => true], ['alignment' => 'center']);
+        // --- BAGIAN TANDA TANGAN DINAMIS ---
+        $section->addText('......................................................., ' . $tglFormat, [], ['alignment' => 'right']);
+        $section->addText('Tim Penjaminan Kualitas', ['bold' => true], ['alignment' => 'right']);
+        $section->addTextBreak(3); // Memberikan jarak 3 baris kosong untuk area tanda tangan
 
-        $tim_penilai = TimPenilai::all();
-        if($tim_penilai->count() > 0) {
-            $no = 1;
-            foreach($tim_penilai as $t) {
-                $table->addRow();
-                $table->addCell(500)->addText($no . '.', [], ['alignment' => 'center']);
-                $table->addCell(2800)->addText($t->nama);
-                $table->addCell(2300)->addText($t->nip, [], ['alignment' => 'center']);
-                $table->addCell(2800)->addText($t->jabatan);
-                $table->addCell(2100)->addText('');
-                $no++;
-            }
+        // Mengecek apakah di form dipilih pegawai tertentu
+        $id_penandatangan = $request->input('penandatangan_id');
+        $pegawai = $id_penandatangan ? TimPenilai::find($id_penandatangan) : null;
+
+        if ($pegawai) {
+            // Jika memilih nama pegawai
+            $section->addText($pegawai->nama, ['bold' => true, 'underline' => 'single'], ['alignment' => 'right']);
+            $section->addText('NIP. ' . $pegawai->nip, [], ['alignment' => 'right']);
         } else {
-            for($i=1; $i<=4; $i++) {
-                $table->addRow();
-                $table->addCell(500)->addText($i . '.', [], ['alignment' => 'center']);
-                $table->addCell(2800)->addText('');
-                $table->addCell(2300)->addText('');
-                $table->addCell(2800)->addText('');
-                $table->addCell(2100)->addText('');
-            }
+            // Jika memilih manual (titik-titik)
+            $section->addText('...........................................', ['bold' => true], ['alignment' => 'right']);
+            $section->addText('NIP. .................................................', [], ['alignment' => 'right']);
         }
 
         $fileName = 'BA_verifikasi_' . str_replace(' ', '_', $request->nama_satker) . '.docx';
@@ -348,7 +335,7 @@ trait ExportPerisaiTrait
         $details = DB::table('detail_penilaian')
             ->join('soal_perisai', 'detail_penilaian.soal_id', '=', 'soal_perisai.id')
             ->where('detail_penilaian.riwayat_id', $id)
-            ->select('soal_perisai.kategori', 'soal_perisai.pertanyaan', 'detail_penilaian.jawaban_yt', 'detail_penilaian.skor', 'detail_penilaian.komentar')
+            ->select('soal_perisai.kategori', 'soal_perisai.pertanyaan', 'detail_penilaian.jawaban_yt', 'detail_penilaian.skor', 'detail_penilaian.temuan_ketidaksesuaian', 'detail_penilaian.catatan')
             ->get()
             ->groupBy('kategori');
 
@@ -368,10 +355,11 @@ trait ExportPerisaiTrait
             $sheet->setCellValue('A5', 'NO');
             $sheet->setCellValue('B5', 'BUTIR PEMERIKSAAN');
             $sheet->setCellValue('C5', 'YA / TIDAK');
-            $sheet->setCellValue('D5', 'SKOR (100)');
-            $sheet->setCellValue('E5', 'KOMENTAR');
+            $sheet->setCellValue('D5', 'NILAI KEPATUHAN');
+            $sheet->setCellValue('E5', 'TEMUAN KETIDAKSESUAIAN');
+            $sheet->setCellValue('F5', 'CATATAN');
 
-            $sheet->getStyle('A5:E5')->applyFromArray([
+            $sheet->getStyle('A5:F5')->applyFromArray([
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1A73E8']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
@@ -383,18 +371,23 @@ trait ExportPerisaiTrait
             $count = count($items);
 
             foreach ($items as $item) {
-                $converted_val = ($item->skor / 5) * 100;
                 $sum_skor += $item->skor;
 
                 $sheet->setCellValue('A' . $row, $no++);
                 $sheet->setCellValue('B' . $row, $item->pertanyaan);
                 $sheet->setCellValue('C' . $row, $item->jawaban_yt);
-                $sheet->setCellValue('D' . $row, $converted_val);
-                $sheet->setCellValue('E' . $row, $item->komentar);
+                $sheet->setCellValue('D' . $row, $item->skor);
+                $sheet->setCellValue('E' . $row, $item->temuan_ketidaksesuaian);
+                $sheet->setCellValue('F' . $row, $item->catatan);
+                
+                $sheet->getStyle('C'.$row.':D'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $row++;
             }
-            $sheet->getColumnDimension('B')->setWidth(60);
-            $sheet->getColumnDimension('E')->setWidth(35);
+            $sheet->getColumnDimension('B')->setWidth(50);
+            $sheet->getColumnDimension('C')->setWidth(15);
+            $sheet->getColumnDimension('D')->setWidth(20);
+            $sheet->getColumnDimension('E')->setWidth(30);
+            $sheet->getColumnDimension('F')->setWidth(30);
             $sheetIndex++;
 
             $skor_kategori = ($count > 0) ? ($sum_skor / ($count * 5)) * 100 : 0;
@@ -530,7 +523,7 @@ trait ExportPerisaiTrait
         ]);
     }
 
-    public function exportWordRiwayat($id)
+    public function exportWordRiwayat($id, $request = null)
     {
         \PhpOffice\PhpWord\Settings::setOutputEscapingEnabled(true);
         $riwayat = RiwayatPenilaian::findOrFail($id);
@@ -612,41 +605,22 @@ trait ExportPerisaiTrait
         $section->addTextBreak(2);
 
         $tglFormat = $waktu->format('d ') . $bulanText . $waktu->format(' Y');
-        $section->addText('Wonosobo, ' . $tglFormat, [], ['alignment' => 'right']);
-        $section->addText('Tim Penjaminan Kualitas', ['bold' => true], ['alignment' => 'left']);
         
-        $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 50];
-        $phpWord->addTableStyle('TimTable', $tableStyle);
-        $table = $section->addTable('TimTable');
-        
-        $table->addRow();
-        $table->addCell(500)->addText('No.', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2800)->addText('Nama', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2300)->addText('NIP', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2800)->addText('Jabatan', ['bold' => true], ['alignment' => 'center']);
-        $table->addCell(2100)->addText('Tandatangan', ['bold' => true], ['alignment' => 'center']);
+        // --- BAGIAN TANDA TANGAN DINAMIS ---
+        $section->addText('..........................., ' . $tglFormat, [], ['alignment' => 'right']);
+        $section->addText('Tim Penjaminan Kualitas', ['bold' => true], ['alignment' => 'right']);
+        $section->addTextBreak(3); 
 
-        $tim_penilai = TimPenilai::all();
-        if($tim_penilai->count() > 0) {
-            $no = 1;
-            foreach($tim_penilai as $t) {
-                $table->addRow();
-                $table->addCell(500)->addText($no . '.', [], ['alignment' => 'center']);
-                $table->addCell(2800)->addText($t->nama);
-                $table->addCell(2300)->addText($t->nip, [], ['alignment' => 'center']);
-                $table->addCell(2800)->addText($t->jabatan);
-                $table->addCell(2100)->addText('');
-                $no++;
-            }
+        // Mengecek apakah di form dipilih pegawai tertentu (Untuk riwayat)
+        $id_penandatangan = $request ? $request->input('penandatangan_id') : null;
+        $pegawai = $id_penandatangan ? TimPenilai::find($id_penandatangan) : null;
+
+        if ($pegawai) {
+            $section->addText($pegawai->nama, ['bold' => true, 'underline' => 'single'], ['alignment' => 'right']);
+            $section->addText('NIP. ' . $pegawai->nip, [], ['alignment' => 'right']);
         } else {
-            for($i=1; $i<=4; $i++) {
-                $table->addRow();
-                $table->addCell(500)->addText($i . '.', [], ['alignment' => 'center']);
-                $table->addCell(2800)->addText('');
-                $table->addCell(2300)->addText('');
-                $table->addCell(2800)->addText('');
-                $table->addCell(2100)->addText('');
-            }
+            $section->addText('............................................', ['bold' => true], ['alignment' => 'right']);
+            $section->addText('NIP. ............................................', [], ['alignment' => 'right']);
         }
 
         $fileName = 'BA_verifikasi_' . str_replace(' ', '_', $riwayat->nama_satker) . '.docx';
