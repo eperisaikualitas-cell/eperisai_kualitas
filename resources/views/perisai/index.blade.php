@@ -135,7 +135,7 @@
     </div>
 
     <div class="header-logo">
-        <img src="{{ asset('images/logo-patnal.jpg') }}" alt="Logo PATNAL" onerror="this.style.display='none'">
+        <img src="{{ asset('logo-patnal.jpg') }}" alt="Logo PATNAL" onerror="this.style.display='none'">
     </div>
     
     <h2>E-PERISAI KUALITAS : Formulir Penjaminan Kualitas</h2>
