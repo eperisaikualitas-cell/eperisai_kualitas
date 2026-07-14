@@ -123,11 +123,11 @@
 <div class="container">
     <div class="user-bar">
         <div>User Aktif: <strong>{{ Auth::user()->name }}</strong></div>
-        <div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <a href="{{ route('perisai.tim') }}" class="btn-tim">👥 KELOLA TIM</a>
             <a href="{{ route('perisai.kuesioner') }}" class="btn-manage">⚙️ KUESIONER</a>
             <a href="{{ route('perisai.riwayat') }}" class="btn-history">📋 RIWAYAT</a>
-            <form method="POST" action="{{ route('logout') }}" style="display:inline-block; margin:0; padding:0; vertical-align:middle;">
+            <form method="POST" action="{{ route('logout') }}" style="display: flex; margin:0; padding:0;">
                 @csrf
                 <button type="submit" class="btn-logout">LOGOUT</button>
             </form>
