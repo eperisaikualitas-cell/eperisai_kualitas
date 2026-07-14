@@ -221,7 +221,7 @@ trait ExportPerisaiTrait
 
         $spreadsheet->setActiveSheetIndex(0);
 
-        $fileName = 'Audit_' . str_replace(' ', '_', $request->nama_satker) . '.xlsx';
+        $fileName = 'Penjaminan_Kualitas_' . str_replace(' ', '_', $request->nama_satker) . '.xlsx';
         $writer = new Xlsx($spreadsheet);
 
         return response()->streamDownload(function () use ($writer) {
@@ -322,7 +322,7 @@ trait ExportPerisaiTrait
             $section->addText('NIP. .................................................', [], ['alignment' => 'right']);
         }
 
-        $fileName = 'BA_verifikasi_' . str_replace(' ', '_', $request->nama_satker) . '.docx';
+        $fileName = 'Penjaminan_Kualitas_' . str_replace(' ', '_', $request->nama_satker) . '.docx';
         $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
         $tempFile = tempnam(sys_get_temp_dir(), 'PHPWord');
         $objWriter->save($tempFile);
@@ -516,7 +516,7 @@ trait ExportPerisaiTrait
 
         $spreadsheet->setActiveSheetIndex(0);
 
-        $fileName = 'Audit_Riwayat_' . str_replace(' ', '_', $riwayat->nama_satker) . '.xlsx';
+        $fileName = 'Penjaminan_Kualitas_' . str_replace(' ', '_', $riwayat->nama_satker) . '.xlsx';
         $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(function () use ($writer) { $writer->save('php://output'); }, $fileName, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -611,9 +611,8 @@ trait ExportPerisaiTrait
         $section->addText('Tim Penjaminan Kualitas', ['bold' => true], ['alignment' => 'right']);
         $section->addTextBreak(3); 
 
-        // Mengecek apakah di form dipilih pegawai tertentu (Untuk riwayat)
-        $id_penandatangan = $request ? $request->input('penandatangan_id') : null;
-        $pegawai = $id_penandatangan ? TimPenilai::find($id_penandatangan) : null;
+        // Membaca pegawai permanen dari database riwayat
+        $pegawai = $riwayat->penandatangan_id ? TimPenilai::find($riwayat->penandatangan_id) : null;
 
         if ($pegawai) {
             $section->addText($pegawai->nama, ['bold' => true, 'underline' => 'single'], ['alignment' => 'right']);
@@ -623,7 +622,7 @@ trait ExportPerisaiTrait
             $section->addText('NIP. ............................................', [], ['alignment' => 'right']);
         }
 
-        $fileName = 'BA_verifikasi_' . str_replace(' ', '_', $riwayat->nama_satker) . '.docx';
+        $fileName = 'Penjaminan_Kualitas_' . str_replace(' ', '_', $riwayat->nama_satker) . '.docx';
         $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
         $tempFile = tempnam(sys_get_temp_dir(), 'PHPWord');
         $objWriter->save($tempFile);

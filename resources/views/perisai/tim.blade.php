@@ -9,16 +9,19 @@
         * { box-sizing: border-box; }
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; min-height: 100vh; padding: 20px; color: #333; 
-            background-image: url('{{ asset("bg-patnal.jpg") }}'); 
+            /* BG BARU */
+            background-image: url('{{ asset("images/gambar_bg.jpeg") }}'); 
             background-size: cover; background-position: center; background-attachment: fixed; 
+            animation: fadeInPage 0.4s ease-out forwards;
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
         }
 
         .container { 
             max-width: 900px; width: 100%; margin: auto; padding: 30px; border-radius: 15px; position: relative;
-            background: rgba(255, 255, 255, 0.6); 
+            background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255, 255, 255, 0.6); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+            border: 1px solid rgba(255, 255, 255, 0.8); 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15); 
         }
         
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 15px; }
@@ -37,6 +40,9 @@
         
         .btn-delete { background: #dc3545; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-edit { background: #ffc107; color: #333; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+
+        body.fade-out { opacity: 0; transform: translateY(-15px); }
+        @keyframes fadeInPage { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -106,10 +112,9 @@
 </div>
 
 <script>
-    // FUNGSI JAVASCRIPT MENERIMA DATA NIP
     function editPegawai(id, nama, nip, jabatan) {
         document.getElementById('input-nama').value = nama;
-        document.getElementById('input-nip').value = nip; // Isi Form NIP
+        document.getElementById('input-nip').value = nip; 
         document.getElementById('input-jabatan').value = jabatan;
         
         document.getElementById('form-tim').action = '/tim/update/' + id;
@@ -122,7 +127,7 @@
 
     function cancelEdit() {
         document.getElementById('input-nama').value = '';
-        document.getElementById('input-nip').value = ''; // Kosongkan Form NIP
+        document.getElementById('input-nip').value = ''; 
         document.getElementById('input-jabatan').value = '';
         
         document.getElementById('form-tim').action = '{{ route("perisai.tim.store") }}';
@@ -132,6 +137,18 @@
         document.getElementById('btn-submit').style.color = 'white';
         document.getElementById('btn-cancel').style.display = 'none';
     }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const links = document.querySelectorAll('a[href]:not([href^="#"]):not([target="_blank"]):not(.btn-excel):not(.btn-word):not(.btn-sm-excel):not(.btn-sm-word)');
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault(); 
+            const targetUrl = this.href;
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = targetUrl; }, 350); 
+        });
+    });
+});
 </script>
 </body>
 </html>

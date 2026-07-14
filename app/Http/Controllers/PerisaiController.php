@@ -81,6 +81,7 @@ class PerisaiController extends Controller
                 'jenis_satker' => $request->jenis_satker,
                 'total_nilai' => $total_akhir,
                 'predikat' => $predikat,
+                'penandatangan_id' => $request->penandatangan_id, // Menyimpan ID penandatangan permanen
             ]);
 
             foreach ($kategori_valid as $kat) {
@@ -120,7 +121,8 @@ class PerisaiController extends Controller
 
     public function riwayat()
     {
-        $riwayat = RiwayatPenilaian::orderBy('created_at', 'desc')->get();
+        // Menambahkan pagination 10 baris per halaman
+        $riwayat = RiwayatPenilaian::orderBy('created_at', 'desc')->paginate(10);
         return view('perisai.riwayat', compact('riwayat'));
     }
 

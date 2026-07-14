@@ -10,16 +10,28 @@
         
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; 
-            background-image: url('{{ asset("bg-patnal.jpg") }}');
+            /* BG BARU */
+            background-image: url('{{ asset("images/gambar_bg.jpeg") }}');
             background-size: cover; background-position: center; background-attachment: fixed;
+            animation: fadeInPage 0.4s ease-out forwards;
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+        
+        body.fade-out {
+            opacity: 0;
+            transform: translateY(-15px);
+        }
+        @keyframes fadeInPage {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .login-box { 
             padding: 40px; border-radius: 15px; width: 100%; max-width: 400px; text-align: center; position: relative;
-            background: rgba(255, 255, 255, 0.6); 
+            background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255, 255, 255, 0.6); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+            border: 1px solid rgba(255, 255, 255, 0.8); 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15); 
         }
         
         .login-box img { width: 100px; margin-bottom: 20px; height: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -48,12 +60,18 @@
             <div class="error">{{ $errors->first() }}</div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" id="login-form">
             @csrf
             <input type="text" name="username" placeholder="Username" required autofocus autocomplete="off">
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Masuk</button>
         </form>
     </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function() {
+            document.body.classList.add('fade-out');
+        });
+    </script>
 </body>
 </html>

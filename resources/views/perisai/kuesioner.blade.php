@@ -9,16 +9,19 @@
         * { box-sizing: border-box; }
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; min-height: 100vh; padding: 20px; color: #333; 
-            background-image: url('{{ asset("bg-patnal.jpg") }}'); 
+            /* BG BARU */
+            background-image: url('{{ asset("images/gambar_bg.jpeg") }}'); 
             background-size: cover; background-position: center; background-attachment: fixed; 
+            animation: fadeInPage 0.4s ease-out forwards;
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
         }
 
         .container { 
             max-width: 1000px; width: 100%; margin: auto; padding: 30px; border-radius: 15px; position: relative;
-            background: rgba(255, 255, 255, 0.6); 
+            background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15); 
         }
         
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
@@ -29,8 +32,7 @@
         .tab { overflow: hidden; border-bottom: 2px solid #1a73e8; margin-bottom: 20px; display: flex; flex-wrap: wrap; }
         .tab button { background-color: rgba(255,255,255,0.5); border: none; outline: none; cursor: pointer; padding: 12px 15px; transition: 0.3s; font-weight: bold; border-radius: 8px 8px 0 0; margin-right: 5px; color: #555; flex: 1; min-width: 120px; margin-bottom: 5px; font-size: 13px;}
         .tab button.active { background-color: #1a73e8; color: white; }
-        .tabcontent { display: none; animation: fadeEffect 0.5s; }
-        @keyframes fadeEffect { from {opacity: 0;} to {opacity: 1;} }
+        .tabcontent { display: none; }
 
         .form-box { background: rgba(255, 255, 255, 0.5); padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.5); margin-bottom: 20px; }
         .form-box-flex { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
@@ -50,6 +52,9 @@
         tr:nth-child(even) { background: rgba(255, 255, 255, 0.5); }
         
         .alert { padding: 12px; background: rgba(212, 237, 218, 0.9); color: #155724; border-radius: 4px; margin-bottom: 20px; font-weight: bold;}
+
+        body.fade-out { opacity: 0; transform: translateY(-15px); }
+        @keyframes fadeInPage { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -156,6 +161,18 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
     document.getElementById('select_kategori').value = tabName;
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const links = document.querySelectorAll('a[href]:not([href^="#"]):not([target="_blank"]):not(.btn-excel):not(.btn-word):not(.btn-sm-excel):not(.btn-sm-word)');
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault(); 
+            const targetUrl = this.href;
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = targetUrl; }, 350); 
+        });
+    });
+});
 </script>
 </body>
 </html>
