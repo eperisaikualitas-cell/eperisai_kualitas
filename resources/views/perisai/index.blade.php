@@ -8,14 +8,12 @@
     <style>
         * { box-sizing: border-box; }
         
-        /* BODY DIBERSIHKAN DARI ANIMASI AGAR POP-UP TIDAK ERROR */
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; color: #333; margin: 0; min-height: 100vh; position: relative;
             background-image: url('{{ asset("images/gambar_bg.jpeg") }}');
             background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat;
         }
 
-        /* ANIMASI DIPINDAHKAN KE CONTAINER */
         .container { 
             max-width: 1200px; width: 100%; margin: auto; padding: 30px; border-radius: 12px; position: relative;
             background: rgba(255, 255, 255, 0.85); 
@@ -65,6 +63,7 @@
         
         .btn-hitung { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; flex: 1; min-width: 200px; max-width: 300px; text-decoration:none; display:flex; justify-content:center; align-items:center; }
         .btn-excel { background: #107c10; } .btn-word { background: #0056b3; }
+        .btn-draft { background: #ffc107; color: #000; } .btn-draft:hover { background: #e0a800; }
         .btn-hitung:hover { transform: translateY(-2px); opacity: 0.9; }
 
         .hasil-box { margin-top: 30px; padding: 25px; border-radius: 8px; text-align: center; }
@@ -110,7 +109,7 @@
     </style>
 </head>
 <body>
-<!-- MODAL POP UP PANDUAN (Posisi di luar container agar aman) -->
+<!-- MODAL POP UP PANDUAN -->
 <div id="guideModal" class="modal-overlay">
     <div class="modal-content">
         <h3 style="margin-top:0; color:#1a73e8;">Panduan Penilaian</h3>
@@ -146,16 +145,19 @@
     @else
         <form method="POST" action="{{ route('perisai.store') }}">
             @csrf
+            <!-- ID RIWAYAT UNTUK AUTO UPDATE DRAFT -->
+            <input type="hidden" name="riwayat_id" value="{{ isset($edit_riwayat) ? $edit_riwayat->id : '' }}">
+
             <div class="config-box">
                 <div class="form-group">
                     <label>Nama Satker yang dinilai:</label>
-                    <input type="text" name="nama_satker" id="input_nama_satker" placeholder="Contoh: Kanim Kelas II Non TPI Wonosobo" required autocomplete="off">
+                    <input type="text" name="nama_satker" id="input_nama_satker" value="{{ isset($edit_riwayat) ? $edit_riwayat->nama_satker : '' }}" placeholder="Contoh: Kanim Kelas II Non TPI Wonosobo" required autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Jenis Satuan Kerja:</label>
                     <select name="jenis_satker" id="select_jenis_satker" onchange="toggleTPI()">
-                        <option value="TPI">TPI</option>
-                        <option value="NON_TPI">NON TPI</option>
+                        <option value="TPI" {{ (isset($edit_riwayat) && $edit_riwayat->jenis_satker == 'TPI') ? 'selected' : '' }}>TPI</option>
+                        <option value="NON_TPI" {{ (isset($edit_riwayat) && $edit_riwayat->jenis_satker == 'NON_TPI') ? 'selected' : '' }}>NON TPI</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -164,7 +166,7 @@
                         <option value="">-- Cetak Default --</option>
                         @php $tim_penilai = \App\Models\TimPenilai::all(); @endphp
                         @foreach($tim_penilai as $tim)
-                            <option value="{{ $tim->id }}">{{ $tim->nama }}</option>
+                            <option value="{{ $tim->id }}" {{ (isset($edit_riwayat) && $edit_riwayat->penandatangan_id == $tim->id) ? 'selected' : '' }}>{{ $tim->nama }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -192,6 +194,10 @@
                             </thead>
                             <tbody>
                                 @foreach($items as $index => $item)
+                                @php
+                                    // Ambil riwayat detail draft jika ada
+                                    $det = (isset($edit_details) && isset($edit_details[$item->id])) ? $edit_details[$item->id] : null;
+                                @endphp
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>
@@ -201,21 +207,21 @@
                                     </td>
                                     <td>
                                         <select name="yt_{{ $kategori }}[]" onchange="handleYtChange(this)">
-                                            <option value="Ya">Ya</option>
-                                            <option value="Tidak">Tidak</option>
+                                            <option value="Ya" {{ ($det && $det->jawaban_yt == 'Ya') ? 'selected' : '' }}>Ya</option>
+                                            <option value="Tidak" {{ ($det && $det->jawaban_yt == 'Tidak') ? 'selected' : '' }}>Tidak</option>
                                         </select>
                                     </td>
                                     <td>
-                                        <select name="val_{{ $kategori }}[]" class="val-select">
-                                            <option value="5">Sangat Sesuai</option>
-                                            <option value="4">Sesuai</option>
-                                            <option value="3">Cukup Sesuai</option>
-                                            <option value="2">Tidak Sesuai</option>
-                                            <option value="1">Sangat Tidak Sesuai</option>
+                                        <select name="val_{{ $kategori }}[]" class="val-select" style="{{ ($det && $det->jawaban_yt == 'Tidak') ? 'pointer-events:none; background:#e9ecef;' : '' }}">
+                                            <option value="5" {{ (!$det || $det->skor == 5) ? 'selected' : '' }}>Sangat Sesuai</option>
+                                            <option value="4" {{ ($det && $det->skor == 4) ? 'selected' : '' }}>Sesuai</option>
+                                            <option value="3" {{ ($det && $det->skor == 3) ? 'selected' : '' }}>Cukup Sesuai</option>
+                                            <option value="2" {{ ($det && $det->skor == 2) ? 'selected' : '' }}>Tidak Sesuai</option>
+                                            <option value="1" {{ ($det && $det->skor == 1) ? 'selected' : '' }}>Sangat Tidak Sesuai</option>
                                         </select>
                                     </td>
-                                    <td><input type="text" name="tm_{{ $kategori }}[]" placeholder="Temuan..."></td>
-                                    <td><input type="text" name="ct_{{ $kategori }}[]" placeholder="Catatan..."></td>
+                                    <td><input type="text" name="tm_{{ $kategori }}[]" value="{{ $det ? $det->temuan_ketidaksesuaian : '' }}" placeholder="Temuan..."></td>
+                                    <td><input type="text" name="ct_{{ $kategori }}[]" value="{{ $det ? $det->catatan : '' }}" placeholder="Catatan..."></td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -224,8 +230,9 @@
                 </div>
             @endforeach
 
-            <div class="sticky-footer">
-                <button type="submit" name="action" value="hitung" class="btn-hitung">HITUNG & SIMPAN REKAPITULASI</button>
+            <div class="sticky-footer" style="gap: 15px;">
+                <button type="submit" name="action" value="draft" class="btn-hitung btn-draft">📝 SIMPAN DRAFT</button>
+                <button type="submit" name="action" value="hitung" class="btn-hitung">✅ HITUNG REKAPITULASI</button>
             </div>
         </form>
     @endif
@@ -303,11 +310,11 @@ document.getElementById('input_nama_satker').addEventListener('input', function(
 
 document.addEventListener("DOMContentLoaded", function() { 
     toggleTPI(); 
-    // Munculkan Modal saat web baru dibuka
+    @if(!isset($edit_riwayat))
     document.getElementById('guideModal').style.display = 'flex';
+    @endif
 });
 
-// SCRIPT TRANSISI HALAMAN MULUS (FADE OUT CLASS DITERAPKAN KE .container BUKAN body)
 document.addEventListener("DOMContentLoaded", function() {
     const links = document.querySelectorAll('a[href]:not([href^="#"]):not([target="_blank"]):not(.btn-excel):not(.btn-word):not(.btn-sm-excel):not(.btn-sm-word)');
     links.forEach(link => {

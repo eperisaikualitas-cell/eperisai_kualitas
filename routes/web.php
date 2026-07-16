@@ -15,6 +15,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [PerisaiController::class, 'index'])->name('perisai.index');
     Route::post('/', [PerisaiController::class, 'store'])->name('perisai.store');
     
+    // TAMBAHAN: Route Lanjutkan Draft
+    Route::get('/perisai/edit/{id}', [PerisaiController::class, 'edit'])->name('perisai.edit');
+    
     // Menu Riwayat
     Route::get('/riwayat', [PerisaiController::class, 'riwayat'])->name('perisai.riwayat');
 
@@ -28,15 +31,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/kuesioner/hapus/{id}', [PerisaiController::class, 'destroyKuesioner'])->name('perisai.kuesioner.destroy');
 
     // Menu Kelola Tim Penilai
-    Route::get('/tim', [App\Http\Controllers\PerisaiController::class, 'tim'])->name('perisai.tim');
-    Route::post('/tim', [App\Http\Controllers\PerisaiController::class, 'storeTim'])->name('perisai.tim.store');
-    Route::delete('/tim/{id}', [App\Http\Controllers\PerisaiController::class, 'destroyTim'])->name('perisai.tim.destroy');
+    Route::get('/tim', [PerisaiController::class, 'tim'])->name('perisai.tim');
+    Route::post('/tim', [PerisaiController::class, 'storeTim'])->name('perisai.tim.store');
+    Route::delete('/tim/{id}', [PerisaiController::class, 'destroyTim'])->name('perisai.tim.destroy');
 
-    // TAMBAHKAN BARIS INI UNTUK FITUR EDIT
-    Route::post('/tim/update/{id}', [App\Http\Controllers\PerisaiController::class, 'updateTim'])->name('perisai.tim.update');
+    // TAMBAHKAN BARIS INI UNTUK FITUR EDIT TIM
+    Route::post('/tim/update/{id}', [PerisaiController::class, 'updateTim'])->name('perisai.tim.update');
+
+    // Route Hapus Riwayat
+    Route::delete('/perisai/riwayat/{id}', [PerisaiController::class, 'destroyRiwayat'])->name('perisai.riwayat.destroy');
 
     // Route Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-    Route::delete('/perisai/riwayat/{id}', [App\Http\Controllers\PerisaiController::class, 'destroyRiwayat'])->name('perisai.riwayat.destroy');
 });

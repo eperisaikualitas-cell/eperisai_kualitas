@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Riwayat Penilaian - E-PERISAI</title>
     <link rel="icon" type="image/jpeg" href="{{ asset('logo1.png') }}">
+    <!-- SWEETALERT2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * { box-sizing: border-box; }
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; min-height: 100vh; padding: 20px; color: #333; 
-            /* BG BARU */
             background-image: url('{{ asset("images/gambar_bg.jpeg") }}'); 
             background-size: cover; background-position: center; background-attachment: fixed; 
             animation: fadeInPage 0.4s ease-out forwards;
@@ -108,29 +109,37 @@
                 @forelse($riwayat as $index => $r)
                     <tr>
                         <td>{{ $riwayat->firstItem() + $index }}</td>
-                        <td style="white-space: nowrap;">{{ $r->created_at->format('d/m/Y H:i') }}</td>
+                        <td style="white-space: nowrap;">{{ $r->created_at->timezone('Asia/Jakarta')->format('d/m/Y H:i') }} WIB</td>
                         <td style="text-align:left; font-weight:bold;">{{ $r->nama_satker }}</td>
                         <td>{{ $r->jenis_satker }}</td>
                         <td style="font-weight:bold; font-size:16px;">{{ number_format($r->total_nilai, 2) }}</td>
                         <td>
-                            @php
-                                if ($r->total_nilai >= 88.00) { $bg = 'bg-cat-a'; } 
-                                elseif ($r->total_nilai >= 78.00) { $bg = 'bg-cat-b'; } 
-                                elseif ($r->total_nilai >= 54.00) { $bg = 'bg-cat-c'; } 
-                                elseif ($r->total_nilai >= 32.00) { $bg = 'bg-cat-d'; } 
-                                else { $bg = 'bg-cat-e'; }
-                            @endphp
-                            <span class="badge {{ $bg }}">{{ $r->predikat }}</span>
+                            @if($r->status === 'draft')
+                                <span class="badge" style="background: #ffc107; color: #000;">📝 DRAFT</span>
+                            @else
+                                @php
+                                    if ($r->total_nilai >= 88.00) { $bg = 'bg-cat-a'; } 
+                                    elseif ($r->total_nilai >= 78.00) { $bg = 'bg-cat-b'; } 
+                                    elseif ($r->total_nilai >= 54.00) { $bg = 'bg-cat-c'; } 
+                                    elseif ($r->total_nilai >= 32.00) { $bg = 'bg-cat-d'; } 
+                                    else { $bg = 'bg-cat-e'; }
+                                @endphp
+                                <span class="badge {{ $bg }}">{{ $r->predikat }}</span>
+                            @endif
                         </td>
                         <td>
                             <div class="action-group">
-                                <a href="{{ route('perisai.riwayat.excel', $r->id) }}" class="btn-sm btn-sm-excel" title="Cetak ke Excel">EXCEL</a>
-                                <a href="{{ route('perisai.riwayat.word', $r->id) }}" class="btn-sm btn-sm-word" title="Cetak ke Word">WORD</a>
+                                @if($r->status === 'draft')
+                                    <a href="{{ route('perisai.edit', $r->id) }}" class="btn-sm" style="background: #ffc107; color: #000;">✏️ LANJUTKAN</a>
+                                @else
+                                    <a href="{{ route('perisai.riwayat.excel', $r->id) }}" class="btn-sm btn-sm-excel" title="Cetak ke Excel">EXCEL</a>
+                                    <a href="{{ route('perisai.riwayat.word', $r->id) }}" class="btn-sm btn-sm-word" title="Cetak ke Word">WORD</a>
+                                @endif
                                 
-                                <form action="{{ route('perisai.riwayat.destroy', $r->id) }}" method="POST" style="margin: 0; display: inline-block;" onsubmit="return confirm('Peringatan: Yakin ingin menghapus riwayat audit {{ $r->nama_satker }} ini? Data yang dihapus tidak bisa dikembalikan!');">
+                                <form action="{{ route('perisai.riwayat.destroy', $r->id) }}" method="POST" class="delete-form" style="margin: 0; display: inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn-sm btn-sm-delete" title="Hapus Riwayat">HAPUS</button>
+                                    <button type="button" class="btn-sm btn-sm-delete" onclick="confirmDelete(this)" title="Hapus Riwayat">HAPUS</button>
                                 </form>
                             </div>
                         </td>
@@ -165,10 +174,26 @@
             </ul>
         </div>
     @endif
-
 </div>
 
 <script>
+function confirmDelete(button) {
+    Swal.fire({
+        title: 'Yakin ingin menghapus?',
+        text: "Data yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('.delete-form').submit();
+        }
+    })
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     const links = document.querySelectorAll('a[href]:not([href^="#"]):not([target="_blank"]):not(.btn-excel):not(.btn-word):not(.btn-sm-excel):not(.btn-sm-word)');
     links.forEach(link => {

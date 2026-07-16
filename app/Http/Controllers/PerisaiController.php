@@ -21,6 +21,15 @@ class PerisaiController extends Controller
         return view('perisai.index', compact('soal', 'hasil'));
     }
 
+    public function edit($id)
+    {
+        $soal = SoalPerisai::all()->groupBy('kategori');
+        $edit_riwayat = RiwayatPenilaian::findOrFail($id);
+        $edit_details = DetailPenilaian::where('riwayat_id', $id)->get()->keyBy('soal_id');
+        
+        return view('perisai.index', compact('soal', 'edit_riwayat', 'edit_details'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -40,7 +49,7 @@ class PerisaiController extends Controller
         try {
             $total_nilai_diperoleh = 0;
             $total_nilai_maksimal = 0;
-            $max_raw_value = 5; // Nilai maksimum per butir sekarang 5
+            $max_raw_value = 5; 
             $results_per_cat = [];
 
             foreach ($kategori_valid as $kat) {
@@ -58,31 +67,47 @@ class PerisaiController extends Controller
 
             $total_akhir = ($total_nilai_maksimal > 0) ? ($total_nilai_diperoleh / $total_nilai_maksimal) * 100 : 0;
             
-            // PENYESUAIAN INTERVAL BARU
+            // CEK STATUS DRAFT
+            $is_draft = $request->action === 'draft';
+            $status_akhir = $is_draft ? 'draft' : 'selesai';
+
             if ($total_akhir >= 88.00) {
                 $predikat = "Kualitas Tertinggi";
-                $warna = "#66FF66"; $teks = "#000000"; // Hijau Muda (A)
+                $warna = "#66FF66"; $teks = "#000000"; 
             } elseif ($total_akhir >= 78.00) {
                 $predikat = "Kualitas Tinggi";
-                $warna = "#32CD32"; $teks = "#000000"; // Hijau (B)
+                $warna = "#32CD32"; $teks = "#000000"; 
             } elseif ($total_akhir >= 54.00) {
                 $predikat = "Kualitas Sedang";
-                $warna = "#FFFF00"; $teks = "#000000"; // Kuning (C)
+                $warna = "#FFFF00"; $teks = "#000000"; 
             } elseif ($total_akhir >= 32.00) {
                 $predikat = "Kualitas Rendah";
-                $warna = "#FF0000"; $teks = "#FFFFFF"; // Merah (D)
+                $warna = "#FF0000"; $teks = "#FFFFFF"; 
             } else {
                 $predikat = "Kualitas Terendah";
-                $warna = "#FF0000"; $teks = "#FFFFFF"; // Merah (E)
+                $warna = "#FF0000"; $teks = "#FFFFFF"; 
             }
 
-            $riwayat = RiwayatPenilaian::create([
+            $predikat_final = $is_draft ? "DRAFT" : $predikat;
+
+            $data_riwayat = [
                 'nama_satker' => $request->nama_satker,
                 'jenis_satker' => $request->jenis_satker,
                 'total_nilai' => $total_akhir,
-                'predikat' => $predikat,
-                'penandatangan_id' => $request->penandatangan_id, // Menyimpan ID penandatangan permanen
-            ]);
+                'predikat' => $predikat_final,
+                'penandatangan_id' => $request->penandatangan_id,
+                'status' => $status_akhir,
+            ];
+
+            // JIKA UPDATE DRAFT LAMA
+            if ($request->riwayat_id) {
+                $riwayat = RiwayatPenilaian::findOrFail($request->riwayat_id);
+                $riwayat->update($data_riwayat);
+                DetailPenilaian::where('riwayat_id', $riwayat->id)->delete(); 
+            } else {
+                // JIKA BUAT BARU
+                $riwayat = RiwayatPenilaian::create($data_riwayat);
+            }
 
             foreach ($kategori_valid as $kat) {
                 if ($request->has("soal_{$kat}")) {
@@ -100,6 +125,10 @@ class PerisaiController extends Controller
                 }
             }
             DB::commit();
+
+            if ($is_draft) {
+                return redirect()->route('perisai.riwayat')->with('success', 'Draft kuesioner berhasil disimpan! Silakan lanjutkan nanti.');
+            }
 
             $hasil = [
                 'id' => $riwayat->id,
@@ -121,7 +150,6 @@ class PerisaiController extends Controller
 
     public function riwayat()
     {
-        // Menambahkan pagination 10 baris per halaman
         $riwayat = RiwayatPenilaian::orderBy('created_at', 'desc')->paginate(10);
         return view('perisai.riwayat', compact('riwayat'));
     }
