@@ -216,8 +216,8 @@
                                             <option value="5" {{ (!$det || $det->skor == 5) ? 'selected' : '' }}>Sangat Sesuai</option>
                                             <option value="4" {{ ($det && $det->skor == 4) ? 'selected' : '' }}>Sesuai</option>
                                             <option value="3" {{ ($det && $det->skor == 3) ? 'selected' : '' }}>Cukup Sesuai</option>
-                                            <option value="2" {{ ($det && $det->skor == 2) ? 'selected' : '' }}>Tidak Sesuai</option>
-                                            <option value="1" {{ ($det && $det->skor == 1) ? 'selected' : '' }}>Sangat Tidak Sesuai</option>
+                                            <option value="2" {{ ($det && $det->skor == 2) ? 'selected' : '' }}>Kurang Sesuai</option>
+                                            <option value="1" {{ ($det && $det->skor == 1) ? 'selected' : '' }}>Tidak Sesuai</option>
                                         </select>
                                     </td>
                                     <td><input type="text" name="tm_{{ $kategori }}[]" value="{{ $det ? $det->temuan_ketidaksesuaian : '' }}" placeholder="Temuan..."></td>
